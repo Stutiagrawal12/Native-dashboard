@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Native Products — Growth Dashboard | Urban Company</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1d27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text-muted: #7a7f94;
+    --text-dim: #4a4f63;
+    --accent: #4f7cff;
+    --accent-soft: rgba(79,124,255,0.12);
+    --accent2: #00c48c;
+    --accent2-soft: rgba(0,196,140,0.1);
+    --warn: #f59e0b;
+    --warn-soft: rgba(245,158,11,0.1);
+    --danger: #ef4444;
+    --danger-soft: rgba(239,68,68,0.1);
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* Grid noise texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,124,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,124,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .shell {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 600; color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(79,124,255,0.35);
+  }
+
+  .header-title { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .header-right { display: flex; gap: 8px; align-items: center; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid;
+    font-family: var(--mono);
+  }
+  .pill-blue { background: var(--accent-soft); border-color: rgba(79,124,255,0.25); color: #7fa3ff; }
+  .pill-green { background: var(--accent2-soft); border-color: rgba(0,196,140,0.2); color: #00c48c; }
+  .pill-amber { background: var(--warn-soft); border-color: rgba(245,158,11,0.2); color: #f59e0b; }
+  .pill-red { background: var(--danger-soft); border-color: rgba(239,68,68,0.2); color: #ef4444; }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ── NAV TABS ── */
+  .nav {
+    display: flex; gap: 2px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    width: fit-content;
+  }
+
+  .nav-btn {
+    padding: 7px 18px;
+    border: none; background: none;
+    color: var(--text-muted);
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(79,124,255,0.35); }
+
+  /* ── METRIC CARDS ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .metric:hover { border-color: var(--border2); }
+  .metric::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-line, var(--accent));
+    border-radius: 2px 2px 0 0;
+  }
+  .metric.green::before { --accent-line: var(--accent2); }
+  .metric.amber::before { --accent-line: var(--warn); }
+  .metric.red::before { --accent-line: var(--danger); }
+
+  .metric-label {
+    font-size: 11px; font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .metric-value {
+    font-size: 28px; font-weight: 600;
+    color: var(--text);
+    letter-spacing: -1px;
+    font-family: var(--mono);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .metric-delta {
+    font-size: 12px; font-family: var(--mono);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .delta-up { color: var(--accent2); }
+  .delta-dn { color: var(--danger); }
+  .delta-neu { color: var(--text-muted); }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+  }
+
+  .card-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title span { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+
+  .two-col { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .two-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  /* ── FUNNEL ── */
+  .funnel-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .funnel-label { font-size: 12px; color: var(--text-muted); width: 130px; flex-shrink: 0; }
+  .funnel-track {
+    flex: 1; height: 24px;
+    background: var(--surface2);
+    border-radius: 6px; overflow: hidden;
+  }
+  .funnel-fill {
+    height: 100%; border-radius: 6px;
+    display: flex; align-items: center; padding-left: 10px;
+    font-size: 11px; font-weight: 500; font-family: var(--mono);
+    transition: width 0.6s ease;
+  }
+  .funnel-pct { font-size: 11px; color: var(--text-dim); font-family: var(--mono); width: 36px; text-align: right; }
+
+  /* ── INSIGHT CARDS ── */
+  .insight {
+    padding: 14px 16px;
+    border-radius: var(--radius);
+    border: 1px solid;
+    margin-bottom: 10px;
+    position: relative;
+    padding-left: 20px;
+  }
+  .insight::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 2px 0 0 2px;
+    background: currentColor;
+  }
+  .insight-blue { background: var(--accent-soft); border-color: rgba(79,124,255,0.2); color: #7fa3ff; }
+  .insight-green { background: var(--accent2-soft); border-color: rgba(0,196,140,0.2); color: #00c48c; }
+  .insight-amber { background: var(--warn-soft); border-color: rgba(245,158,11,0.2); color: var(--warn); }
+  .insight-head { font-weight: 600; font-size: 12.5px; margin-bottom: 4px; }
+  .insight-body { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── TABLE ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .data-table th {
+    color: var(--text-muted); font-weight: 500; font-size: 11px;
+    text-align: left; padding: 0 12px 10px 0;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.4px; text-transform: uppercase;
+  }
+  .data-table td {
+    padding: 11px 12px 11px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+  .data-table .mono { font-family: var(--mono); }
+
+  /* ── FILTER ROW ── */
+  .filter-row {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px;
+  }
+  .filter-row label { font-size: 12px; color: var(--text-muted); }
+  .filter-row select {
+    font-family: var(--font); font-size: 12px;
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: 7px; padding: 6px 12px;
+    cursor: pointer; outline: none;
+  }
+  .filter-row select:focus { border-color: var(--accent); }
+
+  /* ── LIFECYCLE STATS ── */
+  .lc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .lc-stat {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .lc-stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .lc-stat-val { font-size: 22px; font-weight: 600; font-family: var(--mono); color: var(--text); letter-spacing: -0.5px; }
+  .lc-stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; line-height: 1.4; }
+
+  /* ── EXPERIMENT TABLE ── */
+  .exp-badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500; font-family: var(--mono);
+    padding: 3px 9px; border-radius: 999px; border: 1px solid;
+  }
+
+  /* ── HIDDEN ── */
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-left { font-size: 12px; color: var(--text-dim); }
+  .footer-right { font-size: 12px; color: var(--text-muted); font-family: var(--mono); }
+
+  /* ── CHANNEL BARS ── */
+  .channel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .channel-name { font-size: 12px; color: var(--text-muted); width: 70px; flex-shrink: 0; }
+  .channel-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .channel-fill { height: 100%; border-radius: 4px; }
+  .channel-val { font-size: 11px; font-family: var(--mono); color: var(--text-muted); width: 44px; text-align: right; }
+
+  /* ── ROAS INDICATOR ── */
+  .roas-good { color: var(--accent2); }
+  .roas-mid { color: var(--warn); }
+  .roas-bad { color: var(--danger); }
+
+  /* chart containers */
+  .chart-wrap { position: relative; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 900px) {
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col, .two-equal, .three-col { grid-template-columns: 1fr; }
+    .lc-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-mark">UC</div>
+      <div>
+        <div class="header-title">Native Products — Growth &amp; Marketing Dashboard</div>
+        <div class="header-sub">RO Purifiers &amp; Smart Locks &nbsp;·&nbsp; Q2 FY25 &nbsp;·&nbsp; Built by Stuti Agrawal</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="pill pill-green"><span class="dot"></span>Live Simulation</span>
+      <span class="pill pill-blue">Q2 FY25</span>
+      <span class="pill pill-amber">Urban Company</span>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchTab('overview', this)">Overview</button>
+    <button class="nav-btn" onclick="switchTab('campaigns', this)">Campaigns</button>
+    <button class="nav-btn" onclick="switchTab('lifecycle', this)">Lifecycle &amp; Retention</button>
+    <button class="nav-btn" onclick="switchTab('experiments', this)">Experiments</button>
+  </nav>
+
+  <!-- ══ OVERVIEW ══════════════════════════════════════════════════════════════ -->
+  <div id="tab-overview" class="tab-pane active">
+
+    <div class="metrics-grid">
+      <div class="metric blue">
+        <div class="metric-label">Total Revenue</div>
+        <div class="metric-value">₹42.6L</div>
+        <div class="metric-delta delta-up">▲ 18% vs last month</div>
+      </div>
+      <div class="metric green">
+        <div class="metric-label">Blended CAC</div>
+        <div class="metric-value">₹1,240</div>
+        <div class="metric-delta delta-up">▲ improved 9% MoM</div>
+      </div>
+      <div class="metric amber">
+        <div class="metric-label">Overall CVR</div>
+        <div class="metric-value">3.8%</div>
+        <div class="metric-delta delta-up">▲ 0.6pp MoM</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Repeat Rate</div>
+        <div class="metric-value">31%</div>
+        <div class="metric-delta delta-dn">▼ 2pp (service gap)</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Monthly Revenue Split — RO vs Smart Locks <span>₹ Lakhs</span></div>
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Conversion Funnel <span>May 2025</span></div>
+        <div class="funnel-list">
+          <div class="funnel-row">
+            <div class="funnel-label">Impressions</div>
+            <div class="funnel-track">
+              <div class="funnel-fill" style="width:100%;background:rgba(79,124,255,0.7);color:#b0c8ff;">8.2L</div>
+            </div>
+            <div class="funnel-pct">100%</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Clicks (CTR 4.1%)</div>
+            <div class="funnel-track">
+              <div class="funnel-fill" style="width:74%;background:rgba(79,124,255,0.55);color:#b0c8ff;">33,620</div>
+            </div>
+            <div class="funnel-pct">4.1%</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">PDP Views</div>
+            <div class="funnel-track">
+              <div class="funnel-fill" style="width:55%;background:rgba(0,196,140,0.55);color:#7fffce;">21,100</div>
+            </div>
+            <div class="funnel-pct">63%</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Add to Cart</div>
+            <div class="funnel-track">
+              <div class="funnel-fill" style="width:34%;background:rgba(245,158,11,0.55);color:#ffe7a0;">9,400</div>
+            </div>
+            <div class="funnel-pct">44%</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-label">Purchases</div>
+            <div class="funnel-track">
+              <div class="funnel-fill" style="width:14%;background:rgba(0,196,140,0.8);color:#003322;">1,278</div>
+            </div>
+            <div class="funnel-pct">3.8%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">Key Insights &amp; Recommended Actions</div>
+      <div class="insight insight-amber">
+        <div class="insight-head">Cart abandonment at 63% — biggest revenue leak</div>
+        <div class="insight-body">Launch WhatsApp + push nudges at T+1hr and T+24hr for cart drop-offs. A/B test 10% discount vs free installation as the recovery hook. Expected recovery uplift: ~₹3.8L/month.</div>
+      </div>
+      <div class="insight insight-green">
+        <div class="insight-head">RO drives 68% of revenue — prioritise AMC bundling</div>
+        <div class="insight-body">Introduce RO + Annual Maintenance Contract bundle on the app storefront. Model projects 22% uplift in LTV per customer. AMC subscribers show 3.2× higher repeat rate vs non-AMC.</div>
+      </div>
+      <div class="insight insight-blue">
+        <div class="insight-head">Meta ROAS at 2.1× — below 3× target</div>
+        <div class="insight-body">Shift budget from broad to lookalike audiences built on top-5% LTV customers. Refresh creatives with before/after water quality visuals — validated in Experiment #2 at +50% CTR lift.</div>
+      </div>
+    </div>
+
+    <div class="two-equal">
+      <div class="card">
+        <div class="card-title">Spend Allocation by Channel</div>
+        <div style="margin-top:8px;">
+          <div class="channel-row">
+            <div class="channel-name">Meta</div>
+            <div class="channel-track"><div class="channel-fill" style="width:38%;background:#4f7cff;"></div></div>
+            <div class="channel-val">38% · ₹2.5L</div>
+          </div>
+          <div class="channel-row">
+            <div class="channel-name">Google</div>
+            <div class="channel-track"><div class="channel-fill" style="width:30%;background:#00c48c;"></div></div>
+            <div class="channel-val">30% · ₹1.7L</div>
+          </div>
+          <div class="channel-row">
+            <div class="channel-name">YouTube</div>
+            <div class="channel-track"><div class="channel-fill" style="width:20%;background:#f59e0b;"></div></div>
+            <div class="channel-val">20% · ₹0.9L</div>
+          </div>
+          <div class="channel-row">
+            <div class="channel-name">CRM</div>
+            <div class="channel-track"><div class="channel-fill" style="width:12%;background:#a78bfa;"></div></div>
+            <div class="channel-val">12% · ₹0.3L</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">ROAS by Channel</div>
+        <div class="chart-wrap" style="height:160px;">
+          <canvas id="roasChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ CAMPAIGNS ══════════════════════════════════════════════════════════════ -->
+  <div id="tab-campaigns" class="tab-pane">
+
+    <div class="filter-row">
+      <label>Channel:</label>
+      <select id="chFilter" onchange="filterTable()">
+        <option value="all">All channels</option>
+        <option value="Meta">Meta</option>
+        <option value="Google">Google</option>
+        <option value="CRM">CRM</option>
+        <option value="YouTube">YouTube</option>
+      </select>
+      <label style="margin-left:8px;">Product:</label>
+      <select id="prFilter" onchange="filterTable()">
+        <option value="all">All products</option>
+        <option value="RO Purifier">RO Purifier</option>
+        <option value="Smart Locks">Smart Locks</option>
+      </select>
+      <label style="margin-left:8px;">Status:</label>
+      <select id="stFilter" onchange="filterTable()">
+        <option value="all">All</option>
+        <option value="Active">Active</option>
+        <option value="Paused">Paused</option>
+      </select>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">Campaign Performance Tracker <span id="camp-count"></span></div>
+      <table class="data-table" id="campTable">
+        <thead>
+          <tr>
+            <th>Campaign</th>
+            <th>Channel</th>
+            <th>Product</th>
+            <th>Spend</th>
+            <th>Impressions</th>
+            <th>CTR</th>
+            <th>CVR</th>
+            <th>ROAS</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="campBody"></tbody>
+      </table>
+    </div>
+
+    <div class="two-equal">
+      <div class="card">
+        <div class="card-title">CTR vs CVR Scatter</div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="scatterChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Revenue Contribution by Product</div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ LIFECYCLE ══════════════════════════════════════════════════════════════ -->
+  <div id="tab-lifecycle" class="tab-pane">
+
+    <div class="lc-grid">
+      <div class="lc-stat">
+        <div class="lc-stat-label">New user conversion (7-day)</div>
+        <div class="lc-stat-val">12.4%</div>
+        <div class="lc-stat-sub">Up from 9.8% via onboarding nudge push</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-label">Cart abandoner recovery</div>
+        <div class="lc-stat-val">8.7%</div>
+        <div class="lc-stat-sub">WhatsApp T+1hr outperforms email by 3×</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-label">90-day service repeat rate</div>
+        <div class="lc-stat-val">31%</div>
+        <div class="lc-stat-sub">AMC 58% vs non-AMC 18% — 3.2× delta</div>
+      </div>
+      <div class="lc-stat">
+        <div class="lc-stat-label">Push notification CTR</div>
+        <div class="lc-stat-val">6.2%</div>
+        <div class="lc-stat-sub">Personalised copy beats generic by 2.1pp</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">Customer Retention Curve — AMC vs Non-AMC <span>RO Purifier segment</span></div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="retentionChart"></canvas></div>
+    </div>
+
+    <div class="two-equal">
+      <div class="card">
+        <div class="card-title">CRM Journey Performance</div>
+        <table class="data-table">
+          <thead><tr><th>Journey</th><th>Trigger</th><th>CTR</th><th>CVR</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Cart Recovery</td><td class="mono">T+1hr</td><td class="mono roas-good">8.4%</td><td class="mono roas-good">9.3%</td><td><span class="pill pill-green">Active</span></td></tr>
+            <tr><td>New User Nudge</td><td class="mono">Day 1</td><td class="mono roas-good">7.1%</td><td class="mono">4.2%</td><td><span class="pill pill-green">Active</span></td></tr>
+            <tr><td>Service Reminder</td><td class="mono">Day 30</td><td class="mono">5.8%</td><td class="mono">3.1%</td><td><span class="pill pill-green">Active</span></td></tr>
+            <tr><td>Lapsed Win-back</td><td class="mono">Day 60</td><td class="mono roas-mid">3.2%</td><td class="mono roas-mid">1.8%</td><td><span class="pill pill-amber">Optimising</span></td></tr>
+            <tr><td>AMC Upsell</td><td class="mono">Post-install</td><td class="mono roas-good">11.2%</td><td class="mono roas-good">14.6%</td><td><span class="pill pill-green">Active</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Channel Send Mix</div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="channelChart"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ EXPERIMENTS ══════════════════════════════════════════════════════════ -->
+  <div id="tab-experiments" class="tab-pane">
+
+    <div class="metrics-grid">
+      <div class="metric green">
+        <div class="metric-label">Experiments Run</div>
+        <div class="metric-value">6</div>
+        <div class="metric-delta delta-neu">Q2 FY25</div>
+      </div>
+      <div class="metric green">
+        <div class="metric-label">Scaled to Production</div>
+        <div class="metric-value">4</div>
+        <div class="metric-delta delta-up">67% success rate</div>
+      </div>
+      <div class="metric amber">
+        <div class="metric-label">Avg Uplift (winners)</div>
+        <div class="metric-value">46%</div>
+        <div class="metric-delta delta-up">across CTR / CVR / ROAS</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Revenue Impact</div>
+        <div class="metric-value">₹8.4L</div>
+        <div class="metric-delta delta-up">incremental from wins</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-title">A/B Experiment Log <span>All structured tests — Q2 FY25</span></div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:22%">Hypothesis</th>
+            <th>Variable</th>
+            <th>Sample</th>
+            <th>Control</th>
+            <th>Variant</th>
+            <th>Uplift</th>
+            <th>Decision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Free installation CTA boosts cart recovery vs 10% discount</td>
+            <td>WhatsApp CTA copy</td>
+            <td class="mono">4,200</td>
+            <td class="mono">CVR 6.1%</td>
+            <td class="mono roas-good">CVR 9.3%</td>
+            <td><span class="exp-badge pill-green">▲ 52%</span></td>
+            <td><span class="pill pill-green">Scaled</span></td>
+          </tr>
+          <tr>
+            <td>Before/after water quality image outperforms lifestyle photo</td>
+            <td>Meta creative</td>
+            <td class="mono">28,000</td>
+            <td class="mono">CTR 3.2%</td>
+            <td class="mono roas-good">CTR 4.8%</td>
+            <td><span class="exp-badge pill-green">▲ 50%</span></td>
+            <td><span class="pill pill-green">Scaled</span></td>
+          </tr>
+          <tr>
+            <td>Lookalike (top 5% LTV) outperforms broad audience</td>
+            <td>Meta audience targeting</td>
+            <td class="mono">18,000</td>
+            <td class="mono">ROAS 2.1×</td>
+            <td class="mono roas-good">ROAS 3.4×</td>
+            <td><span class="exp-badge pill-green">▲ 62%</span></td>
+            <td><span class="pill pill-green">Scaled</span></td>
+          </tr>
+          <tr>
+            <td>RO + AMC bundle increases AOV vs standalone purchase</td>
+            <td>Pricing/offer structure</td>
+            <td class="mono">2,100</td>
+            <td class="mono">AOV ₹8,200</td>
+            <td class="mono roas-good">AOV ₹10,600</td>
+            <td><span class="exp-badge pill-amber">▲ 29%</span></td>
+            <td><span class="pill pill-amber">Running</span></td>
+          </tr>
+          <tr>
+            <td>8pm send time improves push CTR vs 12pm</td>
+            <td>Push notification timing</td>
+            <td class="mono">11,000</td>
+            <td class="mono">CTR 4.1%</td>
+            <td class="mono">CTR 4.4%</td>
+            <td><span class="exp-badge" style="background:rgba(120,120,120,0.1);border-color:rgba(120,120,120,0.3);color:#888;">▲ 7%</span></td>
+            <td><span class="pill" style="background:rgba(120,120,120,0.1);border-color:rgba(120,120,120,0.3);color:#888;">Inconclusive</span></td>
+          </tr>
+          <tr>
+            <td>Google Smart Bidding reduces CPA vs manual CPC</td>
+            <td>Bid strategy</td>
+            <td class="mono">—</td>
+            <td class="mono">CPA ₹1,480</td>
+            <td class="mono roas-good">CPA ₹1,190</td>
+            <td><span class="exp-badge pill-green">▲ 20%</span></td>
+            <td><span class="pill pill-green">Scaled</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Uplift by Experiment <span>% improvement over control</span></div>
+      <div class="chart-wrap" style="height:200px;"><canvas id="upliftChart"></canvas></div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-left">Built by <strong>Stuti Agrawal</strong> · Portfolio project for Urban Company — Associate, Growth &amp; Marketing</div>
+    <div class="footer-right">Data simulated · May 2025</div>
+  </footer>
+
+</div>
+
+<script>
+/* ─── TAB SWITCHING ──────────────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  initChartsForTab(name);
+}
+
+/* ─── CAMPAIGN DATA ──────────────────────────────────────── */
+const campaigns = [
+  { name: "RO — Water Quality Awareness", channel: "Meta",    product: "RO Purifier",  spend: "₹1.8L", impressions: "3,20,000", ctr: 4.8,  cvr: 4.1, roas: 3.4, status: "Active" },
+  { name: "RO — Monsoon Season Push",     channel: "Google",  product: "RO Purifier",  spend: "₹1.2L", impressions: "2,10,000", ctr: 5.2,  cvr: 5.3, roas: 4.1, status: "Active" },
+  { name: "Locks — Smart Home YouTube",   channel: "YouTube", product: "Smart Locks",  spend: "₹0.9L", impressions: "4,80,000", ctr: 2.1,  cvr: 1.8, roas: 1.6, status: "Paused" },
+  { name: "RO + AMC Bundle — CRM Blast",  channel: "CRM",     product: "RO Purifier",  spend: "₹0.3L", impressions: "18,400",   ctr: 8.4,  cvr: 9.3, roas: 8.2, status: "Active" },
+  { name: "Locks — Security Retargeting", channel: "Meta",    product: "Smart Locks",  spend: "₹0.7L", impressions: "1,40,000", ctr: 3.6,  cvr: 2.9, roas: 2.3, status: "Active" },
+  { name: "RO — Brand Search",            channel: "Google",  product: "RO Purifier",  spend: "₹0.5L", impressions: "62,000",   ctr: 6.1,  cvr: 6.8, roas: 5.7, status: "Active" },
+];
+
+function roasClass(r) {
+  if (r >= 3) return 'roas-good';
+  if (r >= 2) return 'roas-mid';
+  return 'roas-bad';
+}
+function statusPill(s) {
+  if (s === 'Active') return `<span class="pill pill-green">${s}</span>`;
+  if (s === 'Paused') return `<span class="pill pill-amber">${s}</span>`;
+  return `<span class="pill pill-red">${s}</span>`;
+}
+
+function filterTable() {
+  const ch = document.getElementById('chFilter').value;
+  const pr = document.getElementById('prFilter').value;
+  const st = document.getElementById('stFilter').value;
+  const filtered = campaigns.filter(c =>
+    (ch === 'all' || c.channel === ch) &&
+    (pr === 'all' || c.product === pr) &&
+    (st === 'all' || c.status === st)
+  );
+  document.getElementById('camp-count').textContent = filtered.length + ' campaigns';
+  document.getElementById('campBody').innerHTML = filtered.map(c => `
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.channel}</td>
+      <td>${c.product}</td>
+      <td class="mono">${c.spend}</td>
+      <td class="mono">${c.impressions}</td>
+      <td class="mono">${c.ctr.toFixed(1)}%</td>
+      <td class="mono">${c.cvr.toFixed(1)}%</td>
+      <td class="mono ${roasClass(c.roas)}">${c.roas.toFixed(1)}×</td>
+      <td>${statusPill(c.status)}</td>
+    </tr>
+  `).join('');
+}
+
+/* ─── CHART FACTORY ──────────────────────────────────────── */
+const chartInstances = {};
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#7a7f94';
+
+const grid = { color: 'rgba(255,255,255,0.05)', drawBorder: false };
+
+function initChartsForTab(tab) {
+  if (tab === 'overview') {
+    destroyChart('revenueChart');
+    chartInstances['revenueChart'] = new Chart(document.getElementById('revenueChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+        datasets: [
+          { label: 'RO Purifier', data: [18.2, 21.4, 24.8, 28.1, 28.9], backgroundColor: 'rgba(79,124,255,0.75)', borderRadius: 5, borderSkipped: false },
+          { label: 'Smart Locks', data: [6.1, 7.8, 9.2, 11.4, 13.7], backgroundColor: 'rgba(0,196,140,0.65)', borderRadius: 5, borderSkipped: false },
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 14, color: '#7a7f94' } } },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, grid, ticks: { callback: v => '₹' + v + 'L' } }
+        },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+
+    destroyChart('roasChart');
+    chartInstances['roasChart'] = new Chart(document.getElementById('roasChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Meta', 'Google', 'YouTube', 'CRM'],
+        datasets: [{
+          label: 'ROAS',
+          data: [2.85, 4.9, 1.6, 8.2],
+          backgroundColor: [
+            'rgba(79,124,255,0.7)', 'rgba(0,196,140,0.7)',
+            'rgba(245,158,11,0.7)', 'rgba(167,139,250,0.7)'
+          ],
+          borderRadius: 5, borderSkipped: false
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          annotation: {}
+        },
+        scales: {
+          x: { grid, ticks: { callback: v => v + '×' } },
+          y: { grid: { display: false } }
+        },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+  }
+
+  if (tab === 'campaigns') {
+    filterTable();
+    destroyChart('scatterChart');
+    chartInstances['scatterChart'] = new Chart(document.getElementById('scatterChart'), {
+      type: 'scatter',
+      data: {
+        datasets: campaigns.map(c => ({
+          label: c.name.split('—')[0].trim(),
+          data: [{ x: c.ctr, y: c.cvr }],
+          backgroundColor: c.channel === 'Meta' ? '#4f7cff' : c.channel === 'Google' ? '#00c48c' : c.channel === 'CRM' ? '#a78bfa' : '#f59e0b',
+          pointRadius: 7, pointHoverRadius: 9
+        }))
+      },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `CTR ${ctx.parsed.x}% · CVR ${ctx.parsed.y}%` } } },
+        scales: {
+          x: { title: { display: true, text: 'CTR (%)', color: '#7a7f94' }, grid },
+          y: { title: { display: true, text: 'CVR (%)', color: '#7a7f94' }, grid }
+        },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+
+    destroyChart('pieChart');
+    chartInstances['pieChart'] = new Chart(document.getElementById('pieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['RO Purifier', 'Smart Locks'],
+        datasets: [{ data: [68, 32], backgroundColor: ['rgba(79,124,255,0.8)', 'rgba(0,196,140,0.7)'], borderWidth: 0, hoverOffset: 6 }]
+      },
+      options: {
+        cutout: '62%',
+        plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 14 } } },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+  }
+
+  if (tab === 'lifecycle') {
+    destroyChart('retentionChart');
+    chartInstances['retentionChart'] = new Chart(document.getElementById('retentionChart'), {
+      type: 'line',
+      data: {
+        labels: ['Install', 'Day 1', 'Day 7', 'Day 30', 'Day 60', 'Day 90', 'Day 180'],
+        datasets: [
+          { label: 'AMC subscribers', data: [100, 78, 65, 58, 54, 51, 44], borderColor: '#4f7cff', backgroundColor: 'rgba(79,124,255,0.08)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#4f7cff' },
+          { label: 'Non-AMC users', data: [100, 62, 41, 28, 21, 16, 11], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#f59e0b' }
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'top', labels: { boxWidth: 10, padding: 14, color: '#7a7f94' } } },
+        scales: {
+          y: { grid, title: { display: true, text: 'Retention (%)', color: '#7a7f94' }, ticks: { callback: v => v + '%' } },
+          x: { grid: { display: false } }
+        },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+
+    destroyChart('channelChart');
+    chartInstances['channelChart'] = new Chart(document.getElementById('channelChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Push Notifications', 'WhatsApp', 'Email', 'In-App'],
+        datasets: [{ data: [38, 32, 20, 10], backgroundColor: ['#4f7cff', '#00c48c', '#f59e0b', '#a78bfa'], borderWidth: 0, hoverOffset: 5 }]
+      },
+      options: {
+        cutout: '58%',
+        plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 12, color: '#7a7f94' } } },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+  }
+
+  if (tab === 'experiments') {
+    destroyChart('upliftChart');
+    chartInstances['upliftChart'] = new Chart(document.getElementById('upliftChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Free install CTA', 'Water quality creative', 'Lookalike audience', 'AMC bundle pricing', 'Push send time', 'Smart Bidding'],
+        datasets: [{
+          label: 'Uplift %',
+          data: [52, 50, 62, 29, 7, 20],
+          backgroundColor: [52, 50, 62, 29, 7, 20].map(v =>
+            v >= 40 ? 'rgba(0,196,140,0.75)' : v >= 20 ? 'rgba(79,124,255,0.65)' : 'rgba(120,120,120,0.35)'
+          ),
+          borderRadius: 5, borderSkipped: false
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid, ticks: { callback: v => v + '%' } },
+          x: { grid: { display: false }, ticks: { maxRotation: 20 } }
+        },
+        responsive: true, maintainAspectRatio: false
+      }
+    });
+  }
+}
+
+/* ─── INIT ──────────────────────────────────────────────── */
+initChartsForTab('overview');
+</script>
+</body>
+</html>
